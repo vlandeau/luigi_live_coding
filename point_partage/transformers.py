@@ -21,33 +21,32 @@ class NumericalFeatureImputation(TransformerMixin, BaseEstimator):
     def __init__(self, strategy="median"):
         self.strategy = strategy
         self.numerical_columns = []
+        self.fill_na_dict = {}
 
-    def fit(self, df, y=None):
+    def fit(self, df):
         self.numerical_columns = df.select_dtypes(include=[int, float]).columns
+        if self.strategy == "median":
+            self.fill_na_dict = {c: df[c].median() for c in self.numerical_columns}
+        elif self.strategy == "mean":
+            self.fill_na_dict = {c: df[c].median() for c in self.numerical_columns}
+        else:
+            raise Exception("Unknown strategy " + self.strategy)
         return self
 
     def transform(self, df):
-        df_copy = df.copy()
-        if self.strategy == "median":
-            fill_na_dict = {c: df_copy[c].median() for c in self.numerical_columns}
-        elif self.strategy == "mean":
-            fill_na_dict = {c: df_copy[c].median() for c in self.numerical_columns}
-        else:
-            raise Exception("Unknown strategy " + self.strategy)
-        df_copy.fillna(fill_na_dict, inplace=True)
-        print df_copy.isnull().sum()
-        return df_copy
+        df_imputed = df.fillna(self.fill_na_dict, inplace=True)
+        print df_imputed.isnull().sum()
+        return df_imputed
 
 
 class PandasDfToNpArrayConverter(TransformerMixin, BaseEstimator):
     def __init__(self):
         self.features = []
 
-    def fit(self, df, y=None):
+    def fit(self, df):
         self.features = df.sort_index(axis=1).columns
         return self
 
     def transform(self, df):
-        print df.isnull().sum()
         return df.sort_index(axis=1).as_matrix()
 
